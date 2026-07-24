@@ -1,0 +1,23 @@
+{
+  "name": "@gallery-platform/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/generated/client/client.js",
+  "types": "./src/generated/client/client.d.ts",
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "7.8.0",
+    "@prisma/adapter-pg": "7.8.0",
+    "pg": "8.13.1"
+  },
+  "devDependencies": {
+    "prisma": "7.8.0",
+    "dotenv": "16.4.7",
+    "@types/pg": "8.11.10"
+  }
+}
