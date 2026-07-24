@@ -2,3 +2,5 @@ node_modules/
 dist/
 .env
 generated/
+packages/database/src/generated/
+packages/database/.env

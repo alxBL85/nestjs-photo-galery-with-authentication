@@ -1,0 +1,137 @@
+generator client {
+    provider = "prisma-client"
+    output   = "../src/generated/client"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model User {
+    id           String   @id @default(uuid())
+    email        String   @unique
+    passwordHash String
+    name         String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    refreshTokens          RefreshToken[]
+    sentFriendRequests     FriendRequest[] @relation("Requester")
+    receivedFriendRequests FriendRequest[] @relation("Addressee")
+    ownedGalleries         Gallery[]       @relation("GalleryOwner")
+    galleryMemberships     GalleryMember[]
+    uploadedImages         Image[]
+    comments               Comment[]
+
+    @@map("users")
+}
+
+model RefreshToken {
+    id        String    @id @default(uuid())
+    userId    String
+    tokenHash String    @unique
+    expiresAt DateTime
+    revokedAt DateTime?
+    createdAt DateTime  @default(now())
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@map("refresh_tokens")
+}
+
+enum FriendRequestStatus {
+    PENDING
+    ACCEPTED
+    DECLINED
+}
+
+model FriendRequest {
+    id          String              @id @default(uuid())
+    requesterId String
+    addresseeId String
+    status      FriendRequestStatus @default(PENDING)
+    createdAt   DateTime            @default(now())
+    respondedAt DateTime?
+
+    requester User @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+    addressee User @relation("Addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+    @@unique([requesterId, addresseeId])
+    @@map("friend_requests")
+}
+
+model Gallery {
+    id          String   @id @default(uuid())
+    ownerId     String
+    name        String
+    description String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    owner   User            @relation("GalleryOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+    members GalleryMember[]
+    images  Image[]
+
+    @@map("galleries")
+}
+
+enum GalleryMemberRole {
+    OWNER
+    MEMBER
+}
+
+enum GalleryMemberStatus {
+    PENDING
+    ACCEPTED
+    DECLINED
+}
+
+model GalleryMember {
+    id          String              @id @default(uuid())
+    galleryId   String
+    userId      String
+    role        GalleryMemberRole   @default(MEMBER)
+    status      GalleryMemberStatus @default(PENDING)
+    invitedAt   DateTime            @default(now())
+    respondedAt DateTime?
+
+    gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+    user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([galleryId, userId])
+    @@map("gallery_members")
+}
+
+model Image {
+    id          String    @id @default(uuid())
+    galleryId   String
+    uploaderId  String
+    filePath    String
+    description String?
+    latitude    Float?
+    longitude   Float?
+    takenAt     DateTime?
+    createdAt   DateTime  @default(now())
+
+    gallery  Gallery   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+    uploader User      @relation(fields: [uploaderId], references: [id], onDelete: Restrict)
+    comments Comment[]
+
+    @@index([galleryId])
+    @@map("images")
+}
+
+model Comment {
+    id        String   @id @default(uuid())
+    imageId   String
+    authorId  String
+    content   String
+    createdAt DateTime @default(now())
+
+    image  Image @relation(fields: [imageId], references: [id], onDelete: Cascade)
+    author User  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+    @@index([imageId])
+    @@map("comments")
+}
